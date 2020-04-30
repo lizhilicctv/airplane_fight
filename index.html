@@ -63,14 +63,14 @@
 
 			$(document).keydown(function(e) {
 				if (e.keyCode == 37) {
-					if ($('#hero').offset().left > 220) {
+					if ($('#hero').offset().left- $('#bg').offset().left > -70) {
 						$('#hero').offset({
 							left: $('#hero').offset().left - 10
 						})
 					}
 				}
 				if (e.keyCode == 39) {
-					if ($('#hero').offset().left < 670) {
+					if ($('#hero').offset().left- $('#bg').offset().left < 400) {
 						$('#hero').offset({
 							left: $('#hero').offset().left + 10
 						})
