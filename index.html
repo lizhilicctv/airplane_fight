@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+	</head>
+	<style type="text/css">
+		#bg {
+			width: 512px;
+			height: 800px;
+			margin: 0 auto;
+			background-image: url(img/bg.jpg);
+			position: relative;
+			overflow: hidden;
+			border-radius: 10px;
+		}
+
+		.enemy {
+			position: absolute;
+		}
+
+		#bao {
+			position: absolute;
+			width: 100px;
+		}
+
+		.bullet {
+			position: absolute;
+			width: 20px;
+		}
+
+		.bullet img,
+		#bao img {
+			width: 100%;
+		}
+
+		#hero {
+			position: absolute;
+			bottom: 20px;
+			left: 150px;
+		}
+	</style>
+	<body>
+		<h2 style="text-align: center;">打飞机游戏</h2>
+		<p style="text-align: center;">按空格开始（也可以重新开始）！左右箭头移动（也可以鼠标拖动）飞机！</p>
+		<audio id="bgm" src="./audio/bgm.mp3" loop="loop">你的浏览器不支持audio标签。</audio>
+		<audio id="boom" src="audio/boom.mp3">你的浏览器不支持audio标签。</audio>
+		<audio id="bullet" src="audio/bullet.mp3">你的浏览器不支持audio标签。</audio>
+		<div id="bg">
+			<div id="hero"><img src="img/hero.png"></div>
+			<div id="bao" style="display: none;"><img src="img/explosion1.png"></div>
+		</div>
+		<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+		<script type="text/javascript">
+			let bg = 0,
+				tuo = false,
+				bg_ding, bg_ding2;
+			let dier_arr = [],
+				zi_arr = [];
+			let bgm = document.getElementById("bgm");
+			let boom = document.getElementById("boom");
+			let bullet = document.getElementById("bullet");
+
+			$(document).keydown(function(e) {
+				if (e.keyCode == 37) {
+					if ($('#hero').offset().left > 220) {
+						$('#hero').offset({
+							left: $('#hero').offset().left - 10
+						})
+					}
+				}
+				if (e.keyCode == 39) {
+					if ($('#hero').offset().left < 670) {
+						$('#hero').offset({
+							left: $('#hero').offset().left + 10
+						})
+					}
+
+				}
+			})
+
+			$(document).keydown(function(e) {
+				if (e.keyCode == 32) {
+					if (bg_ding) {
+						location.reload();
+					} else {
+						bg_ding = setInterval(function() {
+							//背景移动
+							bg += 2
+							$('#bg').css('backgroundPositionY', bg)
+							//随机出现敌人
+							if (bg % 200 == 0) {
+								dier_arr.push({
+									top: -50,
+									left: Math.ceil(Math.random() * 392)
+								})
+							}
+							//敌人下移，插入dom中
+							$(".enemy").remove();
+							for (let v in dier_arr) {
+								$('#bg').append('<div class="enemy" style="top:' + dier_arr[v].top + 'px;left: ' + dier_arr[v].left +
+									'px;"><img src="img/enemy.png" ></div>');
+								dier_arr[v].top += 3
+								if (dier_arr[v].top > 800) {
+									dier_arr.splice(v, 1)
+								}
+							}
+							//发射子弹
+							//获取英雄 的位置，出现子弹
+							if (bg % 64 == 0) {
+								zi_arr.push({
+									top: $('#hero').position().top - 50,
+									left: $('#hero').position().left + 75
+								})
+								//播放声音
+								bullet.play();
+							}
+							$(".bullet").remove();
+							for (let v in zi_arr) {
+								$('#bg').append('<div class="bullet" style="top:' + zi_arr[v].top + 'px;left: ' + zi_arr[v].left +
+									'px;"><img src="img/bullet.png" ></div>');
+								zi_arr[v].top -= 8
+								if (zi_arr[v].top < 0) {
+									zi_arr.splice(v, 1)
+								}
+							}
+
+							//结束
+							for (let z in dier_arr) {
+								if (dier_arr[z].top > 580 && dier_arr[z].left < $('#hero').position().left + 130 && dier_arr[z].left + 80 >
+									$('#hero').position().left) {
+									ting()
+								}
+							}
+						}, 16);
+
+
+						bg_ding2 = setInterval(function() {
+							//炸毁飞机
+							for (let z in zi_arr) {
+								for (let d in dier_arr) {
+									if ((zi_arr[z].top < dier_arr[d].top && zi_arr[z].top >= dier_arr[d].top - 40) && (zi_arr[z].left >=
+											dier_arr[d].left && zi_arr[z].left <= dier_arr[d].left + 120)) {
+										baozha(dier_arr[d])
+										dier_arr.splice(d, 1)
+										zi_arr.splice(z, 1)
+										//播放声音
+										boom.play();
+									}
+								}
+							}
+						}, 15);
+
+					}
+				}
+			});
+
+
+
+
+
+
+
+			//拖动英雄
+			$("#hero").mousemove(function(e) {
+				if (tuo) {
+					$('#hero').offset({
+						left: e.pageX - 93
+					})
+				}
+				$(document).mouseup(function(e) {
+					tuo = false;
+				})
+			})
+
+			$(document).mousedown(function(e) {
+				tuo = true;
+			})
+			$(document).mouseup(function(e) {
+				tuo = false;
+			})
+
+			//爆炸
+			function baozha(e) {
+
+				//插入
+				$('#bao').show().offset({
+					left: e.left + $('#bg').offset().left,
+					top: e.top + $('#bg').offset().top,
+				})
+				let num = 1;
+				let wo = setInterval(function() {
+
+					$('#bao img').attr("src", "img/explosion" + num + ".png");
+					num++
+					if (num > 19) {
+						$('#bao').hide()
+						window.clearInterval(wo);
+					}
+				}, 20)
+
+			}
+			//结束
+			function ting() {
+				alert('你输了！')
+				window.clearInterval(bg_ding);
+				window.clearInterval(bg_ding2);
+			}
+		</script>
+	</body>
+</html>
